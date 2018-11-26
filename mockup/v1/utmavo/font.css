@@ -1,0 +1,11 @@
+@font-face {
+	font-family: 'utmavo';
+	src: url('./utmavo.eot');
+	src: local('utmavo'), url('./utmavo.woff') format('woff'), url('./utmavo.ttf') format('truetype');
+}
+/* use this class to attach this font to any element i.e. <p class="fontsforweb_fontid_40183">Text with this font applied</p> */
+.fontsforweb_fontid_40183 {
+	font-family: 'utmavo' !important;
+}
+
+/* Font downloaded from FontsForWeb.com */

@@ -1,12 +1,13 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
 
 
 contract Ownable {
     address public owner;
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    constructor () public {
-        owner=msg.sender;
+    constructor() public {
+        owner = msg.sender;
     }
 
     modifier onlyOwner() {
@@ -23,13 +24,15 @@ contract Ownable {
 
 
 contract Enterprise is Ownable { //ghi nhan thong tin Doanh nghiep
-    bytes32 identity;
-    address account;
-    uint index;
-    address addedBy;
-    mapping (uint=>bytes32) public branches;
+    bytes32 identity; //Ma so Doanh nghiep
+    address account; //Tai khoan Doanh nghiep
+    uint index; //So thu tu Doanh nghiep
+    uint counter; //So luong chi nhanh
+    address addedBy; //Duoc them boi
+    bytes32[] branches; //Danh sach chi nhanh
+    mapping (bytes32=>uint) orderBranches; //mapping giua chi nhanh va so thu tu cua no
 
-    constructor (
+    constructor ( //Ham tao
         bytes32 _identity,
         address _account,
         uint _index,
@@ -40,10 +43,13 @@ contract Enterprise is Ownable { //ghi nhan thong tin Doanh nghiep
         index = _index;
         addedBy = _creator;
         owner = _account;
+        counter=0;
     }
 
-    function addBranch(uint _index, bytes32 _identity) onlyOwner public {
-        branches[_index] = _identity;
+    function addBranch(uint _index, bytes32 _identity) onlyOwner public { //Them chi nhanh
+        branches.push(_identity);
+        counter++;
+        orderBranches[_identity]=_index;
     }
 
     function getIdentity() public view returns (bytes32 identity_) {
@@ -62,6 +68,18 @@ contract Enterprise is Ownable { //ghi nhan thong tin Doanh nghiep
     function getAddedBy() public view returns (address addedBy_) {
         addedBy_ = addedBy;
     }
+
+    function getCountBranches() public view returns (uint count_) {
+        count_ = counter;
+    }
+
+    function getIndexBranches(bytes32 _identity) public view returns (uint index_) {
+        index_ = orderBranches[_identity];
+    }
+
+    function getBranch(uint _index) public view returns (bytes32 identity_) {
+        identity_ = branches[_index];
+    }
 }
 
 
@@ -72,9 +90,9 @@ contract SupplyChain is Ownable, Enterprise {
     //enum typedProduct{sold, unSold}
     //typedProduct public TYPEDPRODUCT;
     bool alert;
-    uint[] alertedPosition;
-    uint temp=0;
-    uint root=0;
+    bytes32[] alertedPosition; //Danh sach cac vi tri canh bao
+    uint temp; // Tao ra id
+    uint counter;
     //address creator;
     //owner=creator;
 
@@ -94,8 +112,9 @@ contract SupplyChain is Ownable, Enterprise {
         uint endI;
     }
 
-    Batch[] globatches;
+    Batch[] globatches; //Toan bo Lo hang duoc luu tru
 
+    //Cac batch duoc gui tiep theo tu 1 nut
     struct Send {
         Batch[] batches;
         address[] receivers;
@@ -103,6 +122,7 @@ contract SupplyChain is Ownable, Enterprise {
 
     Send[] senders;
 
+    //Cac batch deu gui den cung 1 nut
     struct Receive {
         Batch[] batches;
         address[] senders;
@@ -115,15 +135,80 @@ contract SupplyChain is Ownable, Enterprise {
     mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
     mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
     mapping (address=>address) acceptedBy; //cho biet cong ty hien tai duoc chap nhan boi cong ty nao truoc do
-    mapping (uint=>Batch) previousBatch; //cho biet Struct truoc do
-    mapping (uint=>Batch) nextBatch; //cho biet Struct sau no
-    mapping (uint=>bool) soldItem;
+    mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
+    //mapping (uint=>Batch) previousBatch; //cho biet Struct truoc do
+    //mapping (uint=>Batch) nextBatch; //cho biet Struct sau no
+    mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
 
-    constructor(
-        address _creator)
+    constructor(address _creator)
     public {
         owner = _creator; //Xac dinh chu so huu dau tien cua Lo hang
         layer[owner]=0;
+        temp=0;
+        counter=0;
+    }
+
+    function getBatch(uint _id) public view returns(Batch memory batch_){
+        return globatches[_id];
+    }
+
+    function isExisted1(uint _id) public view returns (bool){
+        if (_id<=counter) return true;
+    }
+
+    function isExisted2(uint _id) public view returns (bool){
+        return existedBatch[_id];
+    }
+
+    function addNode(address _account) public{
+        node[_account]=true;
+    }
+    
+    function isNode(address _account) public view returns(bool){
+        if(node[_account]==true) return true;
+    }
+    
+    function isSold(uint _id) public view returns(bool){
+        return soldItem[_id];
+    }
+    
+    function setAlert(
+        uint _typedevent,
+        address _from,
+        bytes32 _where,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _what,
+        uint _weight,
+        uint _quantity,
+        uint _start,
+        uint _end)
+    public {
+        layer[msg.sender]=layer[_from]+1;
+        alert=true;
+        alertedPosition.push(_identity);
+        globatches.push(Batch({
+            typedevent: _typedevent,
+            id: temp++,
+            frOm: _from,
+            tO: msg.sender,
+            layerIndex: layer[msg.sender]+1,
+            where: _where,
+            when: _when,
+            identity: _identity,
+            what: _what,
+            weight: _weight,
+            quantity: _quantity,
+            startI:_start,
+            endI: _end
+        }));
+
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setHarvest(
@@ -151,6 +236,18 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+        //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
+
     }
 
     function setStore (
@@ -178,6 +275,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setPacking (
@@ -195,7 +303,7 @@ contract SupplyChain is Ownable, Enterprise {
             id: temp++,
             frOm: msg.sender,
             tO: _to,
-            layerIndex: layer[msg.sender]+1,
+            layerIndex:layer[msg.sender]+1,
             where: _where,
             when: _when,
             identity: _identity,
@@ -205,6 +313,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setUnpacking (
@@ -232,6 +351,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setShipping (
@@ -259,6 +389,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setTransport (
@@ -286,6 +427,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:0,
             endI: 0
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setSell (
@@ -315,6 +467,17 @@ contract SupplyChain is Ownable, Enterprise {
             endI: 0
         }));
         soldItem[_itemId] = true;
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 
     function setaddCode(
@@ -344,6 +507,54 @@ contract SupplyChain is Ownable, Enterprise {
             startI:_start,
             endI: _end
         }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
+    }
+
+    function setReceive(
+        uint _typedevent,
+        address _from,
+        bytes32 _where,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _what,
+        uint _weight,
+        uint _quantity,
+        uint _start,
+        uint _end)
+    public {
+        layer[msg.sender]=layer[_from]+1;
+        globatches.push(Batch({
+            typedevent: _typedevent,
+            id: temp++,
+            frOm: _from,
+            tO: msg.sender,
+            layerIndex: layer[msg.sender]+1,
+            where: _where,
+            when: _when,
+            identity: _identity,
+            what: _what,
+            weight: _weight,
+            quantity: _quantity,
+            startI:_start,
+            endI: _end
+        }));
+
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        counter++;
+
+        existedBatch[temp]=true;
     }
 }
 

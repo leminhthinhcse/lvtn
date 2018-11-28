@@ -82,18 +82,51 @@ contract Enterprise is Ownable { //ghi nhan thong tin Doanh nghiep
     }
 }
 
-
-contract SupplyChain is Ownable, Enterprise {
-
-   // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
-    //typedEvent public TYPEDEVENT;
-    //enum typedProduct{sold, unSold}
-    //typedProduct public TYPEDPRODUCT;
+contract System{
     bool alert;
     bytes32[] alertedPosition; //Danh sach cac vi tri canh bao
     uint temp; // Tao ra id
     uint i; //Bien dem theo Next
     uint j; //Bien dem theo Previous
+    
+    address[] inChainEnterprises; //cac Cong ty tham gia trong chuoi
+    
+    mapping (address=>bool) node; //cong ty co tham gia trong chuoi
+    mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
+    mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
+    mapping (address=>address) acceptedBy; //cho biet cong ty hien tai duoc chap nhan boi cong ty nao truoc do
+    mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
+    mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
+    mapping (bytes32=>uint) idBatch; //Cho biet id cua Batch khi biet Identity
+    mapping (bytes32=>address) own; //Chu so huu Batch la ai
+    mapping (uint=>uint[]) countNext; //NextPointer tai 1 nut
+    mapping (uint=>uint[]) countPrev; //PreviousPointer tai 1 nut
+    
+    //Cac batch duoc gui tiep theo tu 1 nut
+    struct Next { 
+        uint id;
+        address receiver;
+    }
+
+    Next[] nexts; //Toan bo con tro Next
+
+    //Cac batch deu gui den cung 1 nut 
+    struct Previous {
+        uint id;
+        address sender;
+    }
+
+    Previous[] previouses; //Toan bo con tro Previous
+}
+
+
+contract SupplyChain is Ownable, Enterprise, System {
+
+   // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
+    //typedEvent public TYPEDEVENT;
+    //enum typedProduct{sold, unSold}
+    //typedProduct public TYPEDPRODUCT;
+   
     //address creator;
     //owner=creator;
 
@@ -116,34 +149,6 @@ contract SupplyChain is Ownable, Enterprise {
     }
 
     Batch[] globatches; //Toan bo Lo hang duoc luu tru
-    
-    //Cac batch duoc gui tiep theo tu 1 nut
-    struct Next { 
-        uint id;
-        address receiver;
-    }
-
-    Next[] nexts; 
-
-    //Cac batch deu gui den cung 1 nut 
-    struct Previous {
-        uint id;
-        address sender;
-    }
-
-    Previous[] previouses;
-
-    address[] inChainEnterprises; //cac Cong ty tham gia trong chuoi
-    mapping (address=>bool) node; //cong ty co tham gia trong chuoi
-    mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
-    mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
-    mapping (address=>address) acceptedBy; //cho biet cong ty hien tai duoc chap nhan boi cong ty nao truoc do
-    mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
-    mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
-    mapping (bytes32=>uint) idBatch;
-    mapping (bytes32=>address) own; //Chu so huu Batch la ai
-    mapping (uint=>uint[]) countNext;
-    mapping (uint=>uint[]) countPrev;
 
     constructor(address _creator)
     public {
@@ -607,12 +612,12 @@ contract SupplyChain is Ownable, Enterprise {
         createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
-
+        
         existedBatch[temp]=true;
-
+        
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         own[_identity]=msg.sender; //Danh dau Chu so huu
-
+        
         i=i++;
         j=j++;
         //tao NextPoint cho Batch truoc do
@@ -662,12 +667,12 @@ contract SupplyChain is Ownable, Enterprise {
         createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
-
+        
         existedBatch[temp]=true;
-
+        
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         own[_identity]=msg.sender; //Danh dau Chu so huu
-
+        
         i=i++;
         j=j++;
         //tao NextPoint cho Batch truoc do
@@ -678,7 +683,7 @@ contract SupplyChain is Ownable, Enterprise {
         countPrev[temp].push(j);
         setPreviousPoint(_identityPrevBatch);
     }
-
+    
     function setReceive(
         uint _typedevent,
         address _from,
@@ -709,17 +714,17 @@ contract SupplyChain is Ownable, Enterprise {
             startI:_start,
             endI: _end
         }));
-
+         
         //Danh dau nguoi tao Event
         createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
-
+        
         existedBatch[temp]=true;
-
+        
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         own[_identity]=msg.sender; //Danh dau Chu so huu
-
+        
         i=i++;
         j=j++;
         //tao NextPoint cho Batch truoc do

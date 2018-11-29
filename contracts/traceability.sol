@@ -94,7 +94,6 @@ contract System{
     mapping (address=>bool) node; //cong ty co tham gia trong chuoi
     mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
     mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
-    mapping (address=>address) acceptedBy; //cho biet cong ty hien tai duoc chap nhan boi cong ty nao truoc do
     mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
     mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
     mapping (bytes32=>uint) idBatch; //Cho biet id cua Batch khi biet Identity
@@ -151,12 +150,51 @@ contract SupplyChain is Ownable, Enterprise, System {
 
     Batch[] globatches; //Toan bo Lo hang duoc luu tru
 
+    modifier onlyNode() {
+        require(node[msg.sender] == true);
+        _;
+    }
+
     constructor(address _creator)
     public {
         owner = _creator; //Xac dinh chu so huu dau tien cua Lo hang
         layer[owner]=0;
         temp=0;
+        //Them Doanh nghiep
+        if (isNode(msg.sender)!=true){
+            addNode(msg.sender);
+            inChainEnterprises.push(msg.sender);
+        }
+        
         //counter=0;
+    }
+    
+    function alertWith(bytes32 _identity) public view returns(address){
+        return globatches[idBatch[_identity]].frOm;
+    }
+    
+    function alertWith(uint _id) public view returns(address){
+        return globatches[_id].frOm;
+    }
+    
+    function alertBy(bytes32 _identity) public view returns(address){
+        return createdBy[idBatch[_identity]];
+    }
+    
+    function alertBy(uint _id) public view returns(address){
+        return createdBy[_id];
+    }
+    
+    function alertAt(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].where;
+    }
+    
+    function alertAt(uint _id) public view returns(bytes32){
+        return globatches[_id].where;
+    }
+    
+    function isStatus()public view returns(bool){
+        return alert;
     }
     
     function getSoldItemInBatch(uint _itemId) public view returns(Batch memory batch_){
@@ -172,11 +210,11 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
     
     function getCreatBy(bytes32 _identity) public view returns(address){
-        return globatches[idBatch[_identity]].frOm;
+        return createdBy[idBatch[_identity]];
     }
     
     function getCreatBy(uint _id) public view returns(address){
-        return globatches[_id].frOm;
+        return createdBy[_id];
     }
     
     function getLocation(bytes32 _identity) public view returns(bytes32){
@@ -241,7 +279,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         setPrevious(idBatch[_identityPrevBatch],own[_identityPrevBatch]);
     }
     
-    function setAlert(
+    function setAlert (
         uint _typedevent,
         address _from,
         bytes32 _where,
@@ -253,7 +291,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _start,
         uint _end,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode {
         layer[msg.sender]=layer[_from]+1;
         alert=true;
         alertedPosition.push(_identity);
@@ -301,7 +339,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         bytes32 _what,
         uint _weight,
         uint _quantity)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -348,7 +386,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -401,7 +439,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -454,7 +492,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -507,7 +545,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -560,7 +598,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -614,7 +652,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _quantity,
         uint _itemId,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
             temp=temp++;
             globatches.push(Batch({
             typedevent: _typedevent,
@@ -671,7 +709,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _start,
         uint _end,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
         temp=temp++;
         globatches.push(Batch({
             typedevent: _typedevent,
@@ -726,7 +764,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         uint _start,
         uint _end,
         bytes32 _identityPrevBatch)
-    public {
+    public onlyNode{
         temp=temp++;
         layer[msg.sender]=layer[_from]+1;
         globatches.push(Batch({

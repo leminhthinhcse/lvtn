@@ -101,6 +101,7 @@ contract System{
     mapping (bytes32=>address) own; //Chu so huu Batch la ai
     mapping (uint=>uint[]) countNext; //NextPointer tai 1 nut
     mapping (uint=>uint[]) countPrev; //PreviousPointer tai 1 nut
+    mapping (uint=>uint) soldAt;
     
     //Cac batch duoc gui tiep theo tu 1 nut
     struct Next { 
@@ -158,19 +159,47 @@ contract SupplyChain is Ownable, Enterprise, System {
         //counter=0;
     }
     
+    function getSoldItemInBatch(uint _itemId) public view returns(Batch memory batch_){
+        return globatches[soldAt[_itemId]];
+    }
+    
+    function getSoldBy(uint _itemId) public view returns(address){
+        return globatches[soldAt[_itemId]].frOm;
+    }
+    
+    function getSoldAt(uint _itemId)public view returns(bytes32){
+        return globatches[soldAt[_itemId]].where;
+    }
+    
+    function getCreatBy(bytes32 _identity) public view returns(address){
+        return globatches[idBatch[_identity]].frOm;
+    }
+    
+    function getCreatBy(uint _id) public view returns(address){
+        return globatches[_id].frOm;
+    }
+    
+    function getLocation(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].where;
+    }
+    
+     function getLocation(uint _id) public view returns(bytes32){
+        return globatches[_id].where;
+    }
+    
     function getCountBatch() public view returns(uint){
         return globatches.length;
+    }
+    
+    function getBatch(bytes32 _identity) public view returns(Batch memory batch_){
+        return globatches[idBatch[_identity]];
     }
     
     function getBatch(uint _id) public view returns(Batch memory batch_){
         return globatches[_id];
     }
     
-    function isExisted1(uint _id) public view returns (bool){
-        if (_id<=counter) return true;
-    }
-    
-    function isExisted2(uint _id) public view returns (bool){
+    function isExisted(uint _id) public view returns (bool){
         return existedBatch[_id];
     }
     
@@ -603,6 +632,7 @@ contract SupplyChain is Ownable, Enterprise, System {
             endI: 0
         }));
         soldItem[_itemId] = true;
+        soldAt[_itemId]=temp;
          //Them Doanh nghiep
         if (isNode(_to)!=true){
             addNode(_to);

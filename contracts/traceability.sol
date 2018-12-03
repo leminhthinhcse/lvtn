@@ -23,73 +23,66 @@ contract Ownable {
 }
 
 
-contract Enterprise is Ownable { //ghi nhan thong tin Doanh nghiep
-    bytes32 identity; //Ma so Doanh nghiep
-    address account; //Tai khoan Doanh nghiep
-    uint index; //So thu tu Doanh nghiep
-    uint counter; //So luong chi nhanh
-    address addedBy; //Duoc them boi
+contract Enterprise  { //ghi nhan thong tin Doanh nghiep
+    bytes32 identityEnt; //Ma so Doanh nghiep
+    address accountEnt; //Tai khoan Doanh nghiep
+    uint8 indexEnt; //So thu tu Doanh nghiep
+    uint8 counterEnt; //So luong chi nhanh
+    address addedByEnt; //Duoc them boi
     bytes32[] branches; //Danh sach chi nhanh
-    mapping (bytes32=>uint) orderBranches; //mapping giua chi nhanh va so thu tu cua no
+    mapping (bytes32=>uint8) orderBranches; //mapping giua chi nhanh va so thu tu cua no
 
     constructor ( //Ham tao
         bytes32 _identity,
         address _account,
-        uint _index,
+        uint8 _index,
         address _creator)
     public {
-        identity = _identity;
-        account = _account;
-        index = _index;
-        addedBy = _creator;
-        owner = _account;
-        counter= 0;
+        identityEnt = _identity;
+        accountEnt = _account;
+        indexEnt = _index;
+        addedByEnt = _creator;
+        //owner = _account;
+        counterEnt= 0;
     }
 
-    function addBranch(uint _index, bytes32 _identity) onlyOwner public { //Them chi nhanh
+    function addBranch(uint8 _index, bytes32 _identity) public { //Them chi nhanh
         branches.push(_identity);
-        counter++;
+        counterEnt++;
         orderBranches[_identity]=_index;
     }
 
-    function getIdentity() public view returns (bytes32 identity_) {
-        identity_ = identity;
+    function getIdentity() public view returns (bytes32 name) {
+        return identityEnt;
 
     }
 
-    function getAccount() public view returns (address account_) {
-        account_ = account;
+    function getAccount() public view returns (address addr) {
+        return accountEnt;
     }
 
-    function getIndex() public view returns (uint index_) {
-        index_ = index;
+    function getIndex() public view returns (uint8 number) {
+        return  indexEnt;
     }
 
-    function getAddedBy() public view returns (address addedBy_) {
-        addedBy_ = addedBy;
+    function getAddedBy() public view returns (address who) {
+        return addedByEnt;
     }
     
-    function getCountBranches() public view returns (uint count_) {
-        count_ = counter;
+    function getCountBranches() public view returns (uint8 quantity) {
+        return counterEnt;
     }
     
-    function getIndexBranches(bytes32 _identity) public view returns (uint index_) {
-        index_ = orderBranches[_identity];
+    function getIndexBranches(bytes32 _identity) public view returns (uint8 number) {
+        return orderBranches[_identity];
     }
     
-    function getBranch(uint _index) public view returns (bytes32 identity_) {
-        identity_ = branches[_index];
+    function getBranch(uint8 _index) public view returns (bytes32 name) {
+        return branches[_index];
     }
 }
 
 contract System{
-    bool alert;
-    bytes32[] alertedPosition; //Danh sach cac vi tri canh bao
-    uint temp; // Tao ra id
-    uint i; //Bien dem theo Next
-    uint j; //Bien dem theo Previous
-    
-    address[] inChainEnterprises; //cac Cong ty tham gia trong chuoi
     
     mapping (address=>bool) node; //cong ty co tham gia trong chuoi
     mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
@@ -97,30 +90,21 @@ contract System{
     mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
     mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
     mapping (bytes32=>uint) idBatch; //Cho biet id cua Batch khi biet Identity
-    mapping (bytes32=>address) own; //Chu so huu Batch la ai
+    mapping (bytes32=>address) Of; //Chu so huu Batch la ai
     mapping (uint=>uint[]) countNext; //NextPointer tai 1 nut
     mapping (uint=>uint[]) countPrev; //PreviousPointer tai 1 nut
     mapping (uint=>uint) soldAt;
-    
-    //Cac batch duoc gui tiep theo tu 1 nut
-    struct Next { 
-        uint id;
-        address receiver;
-    }
-
-    Next[] nexts; //Toan bo con tro Next
-
-    //Cac batch deu gui den cung 1 nut 
-    struct Previous {
-        uint id;
-        address sender;
-    }
-
-    Previous[] previouses; //Toan bo con tro Previous
 }
 
-
-contract SupplyChain is Ownable, Enterprise, System {
+contract Supplychain is Ownable, System {
+    bool public alert;
+    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
+    uint temp; // Tao ra id
+    uint i; //Bien dem theo Next
+    uint j; //Bien dem theo Previous
+    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
+    
+    
 
    // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
     //typedEvent public TYPEDEVENT;
@@ -131,15 +115,15 @@ contract SupplyChain is Ownable, Enterprise, System {
     //owner=creator;
 
     struct Batch {
-        uint typedevent;
+    //    uint typedevent;
         uint id;
         address frOm;
         address tO;
         uint layerIndex;
-        bytes32 where;
+        bytes32 position;
         uint when;
         bytes32 identity;
-        bytes32 what;
+        bytes32 item;
         uint weight;
         uint quantity;
         uint startI;
@@ -148,14 +132,32 @@ contract SupplyChain is Ownable, Enterprise, System {
         //uint[] prev_j;
     }
 
-    Batch[] globatches; //Toan bo Lo hang duoc luu tru
+    Batch[] public globatches; //Toan bo Lo hang duoc luu tru
+    
+   
+    
+    //Cac batch duoc gui tiep theo tu 1 nut
+    struct Next { 
+        uint id;
+        address receiver;
+    }
+
+    Next[] public nexts; //Toan bo con tro Next
+
+    //Cac batch deu gui den cung 1 nut 
+    struct Previous {
+        uint id;
+        address sender;
+    }
+    
+    Previous[] public previouses;
 
     modifier onlyNode() {
         require(node[msg.sender] == true);
         _;
     }
 
-    constructor(address _creator)
+    constructor (address _creator)
     public {
         owner = _creator; //Xac dinh chu so huu dau tien cua Lo hang
         layer[owner]=0;
@@ -167,74 +169,6 @@ contract SupplyChain is Ownable, Enterprise, System {
         }
         
         //counter=0;
-    }
-    
-    function alertWith(bytes32 _identity) public view returns(address){
-        return globatches[idBatch[_identity]].frOm;
-    }
-    
-    function alertWith(uint _id) public view returns(address){
-        return globatches[_id].frOm;
-    }
-    
-    function alertBy(bytes32 _identity) public view returns(address){
-        return createdBy[idBatch[_identity]];
-    }
-    
-    function alertBy(uint _id) public view returns(address){
-        return createdBy[_id];
-    }
-    
-    function alertAt(bytes32 _identity) public view returns(bytes32){
-        return globatches[idBatch[_identity]].where;
-    }
-    
-    function alertAt(uint _id) public view returns(bytes32){
-        return globatches[_id].where;
-    }
-    
-    function isStatus()public view returns(bool){
-        return alert;
-    }
-    
-    function getSoldItemInBatch(uint _itemId) public view returns(Batch memory batch_){
-        return globatches[soldAt[_itemId]];
-    }
-    
-    function getSoldBy(uint _itemId) public view returns(address){
-        return globatches[soldAt[_itemId]].frOm;
-    }
-    
-    function getSoldAt(uint _itemId)public view returns(bytes32){
-        return globatches[soldAt[_itemId]].where;
-    }
-    
-    function getCreatBy(bytes32 _identity) public view returns(address){
-        return createdBy[idBatch[_identity]];
-    }
-    
-    function getCreatBy(uint _id) public view returns(address){
-        return createdBy[_id];
-    }
-    
-    function getLocation(bytes32 _identity) public view returns(bytes32){
-        return globatches[idBatch[_identity]].where;
-    }
-    
-     function getLocation(uint _id) public view returns(bytes32){
-        return globatches[_id].where;
-    }
-    
-    function getCountBatch() public view returns(uint){
-        return globatches.length;
-    }
-    
-    function getBatch(bytes32 _identity) public view returns(Batch memory batch_){
-        return globatches[idBatch[_identity]];
-    }
-    
-    function getBatch(uint _id) public view returns(Batch memory batch_){
-        return globatches[_id];
     }
     
     function isExisted(uint _id) public view returns (bool){
@@ -253,8 +187,8 @@ contract SupplyChain is Ownable, Enterprise, System {
         return soldItem[_id];
     }
     
-    function getIdBatch(bytes32 _identity) public view returns(uint){
-        return idBatch[_identity];
+    function isStatus()public view returns(bool){
+        return alert;
     }
     
     function setNext(uint _id, address _receiver) public {
@@ -264,7 +198,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         }));
     }
     
-    function setPrevious(uint _id, address _sender) public {
+    function setPrevious(uint _id, address _sender) public{
         previouses.push(Previous({
             id: _id,
             sender: _sender
@@ -276,16 +210,16 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
     
     function setPreviousPoint(bytes32 _identityPrevBatch)public{
-        setPrevious(idBatch[_identityPrevBatch],own[_identityPrevBatch]);
+        setPrevious(idBatch[_identityPrevBatch],Of[_identityPrevBatch]);
     }
     
     function setAlert (
-        uint _typedevent,
+        //uint _typedevent,
         address _from,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         uint _start,
@@ -297,15 +231,15 @@ contract SupplyChain is Ownable, Enterprise, System {
         alertedPosition.push(_identity);
         temp=temp++;
         globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: _from,
             tO: msg.sender,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:_start,
@@ -331,26 +265,26 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
     
     function setHarvest(
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -369,35 +303,35 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         //i=i++;
         //j=j++;
         
     }
-
+    
     function setStore (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex:layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -416,7 +350,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -428,29 +362,29 @@ contract SupplyChain is Ownable, Enterprise, System {
         countPrev[temp].push(j);
         setPreviousPoint(_identityPrevBatch);
     }
-
+    
     function setPacking (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex:layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -469,7 +403,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -481,29 +415,29 @@ contract SupplyChain is Ownable, Enterprise, System {
         countPrev[temp].push(j);
         setPreviousPoint(_identityPrevBatch);
     }
-
+    
     function setUnpacking (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -522,7 +456,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -533,30 +467,30 @@ contract SupplyChain is Ownable, Enterprise, System {
         //tao PreviousPoint cho Batch hien tai
         countPrev[temp].push(j);
         setPreviousPoint(_identityPrevBatch);
-    }
+   }
 
     function setShipping (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -575,7 +509,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -589,27 +523,27 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
 
     function setTransport (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
@@ -628,7 +562,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -642,35 +576,35 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
 
     function setSell (
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
-        uint _itemId,
+        uint _productId,
         bytes32 _identityPrevBatch)
     public onlyNode{
             temp=temp++;
             globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:0,
             endI: 0
         }));
-        soldItem[_itemId] = true;
-        soldAt[_itemId]=temp;
+        soldItem[_productId] = true;
+        soldAt[_productId]=temp;
          //Them Doanh nghiep
         if (isNode(_to)!=true){
             addNode(_to);
@@ -684,7 +618,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -698,12 +632,12 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
 
     function setaddCode(
-        uint _typedevent,
+        //uint _typedevent,
         address _to,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         uint _start,
@@ -712,15 +646,15 @@ contract SupplyChain is Ownable, Enterprise, System {
     public onlyNode{
         temp=temp++;
         globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:_start,
@@ -739,7 +673,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -753,12 +687,12 @@ contract SupplyChain is Ownable, Enterprise, System {
     }
     
     function setReceive(
-        uint _typedevent,
+        //uint _typedevent,
         address _from,
-        bytes32 _where,
+        bytes32 _position,
         uint _when,
         bytes32 _identity,
-        bytes32 _what,
+        bytes32 _item,
         uint _weight,
         uint _quantity,
         uint _start,
@@ -768,15 +702,15 @@ contract SupplyChain is Ownable, Enterprise, System {
         temp=temp++;
         layer[msg.sender]=layer[_from]+1;
         globatches.push(Batch({
-            typedevent: _typedevent,
+            //typedevent: _typedevent,
             id: temp,
             frOm: _from,
             tO: msg.sender,
             layerIndex: layer[msg.sender]+1,
-            where: _where,
+            position: _position,
             when: _when,
             identity: _identity,
-            what: _what,
+            item: _item,
             weight: _weight,
             quantity: _quantity,
             startI:_start,
@@ -791,7 +725,7 @@ contract SupplyChain is Ownable, Enterprise, System {
         existedBatch[temp]=true;
         
         idBatch[_identity]=temp; //Danh dau Id Lo hang
-        own[_identity]=msg.sender; //Danh dau Chu so huu
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
         
         i=i++;
         j=j++;
@@ -803,15 +737,99 @@ contract SupplyChain is Ownable, Enterprise, System {
         countPrev[temp].push(j);
         setPreviousPoint(_identityPrevBatch);
     }
+    
+    
+    function alertWith(bytes32 _identity) public view returns(address){
+        return globatches[idBatch[_identity]].frOm;
+    }
+    
+    function alertWith(uint _id) public view returns(address){
+        return globatches[_id].frOm;
+    }
+    
+    function alertBy(bytes32 _identity) public view returns(address){
+        return createdBy[idBatch[_identity]];
+    }
+    
+    function alertBy(uint _id) public view returns(address){
+        return createdBy[_id];
+    }
+    
+    function alertAt(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].position;
+    }
+    
+    function alertAt(uint _id) public view returns(bytes32){
+        return globatches[_id].position;
+    }
+    
+    function getSoldItemInBatch(uint _productId) public view returns(Batch memory batch_){
+        return globatches[soldAt[_productId]];
+    }
+    
+    function getSoldBy(uint _productId) public view returns(address){
+        return globatches[soldAt[_productId]].frOm;
+    }
+    
+    function getSoldAt(uint _productId)public view returns(bytes32){
+        return globatches[soldAt[_productId]].position;
+    }
+    
+    function getCreatBy(bytes32 _identity) public view returns(address){
+        return createdBy[idBatch[_identity]];
+    }
+    
+    function getCreatBy(uint _id) public view returns(address){
+        return createdBy[_id];
+    }
+    
+    function getLocation(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].position;
+    }
+    
+     function getLocation(uint _id) public view returns(bytes32){
+        return globatches[_id].position;
+    }
+    
+    function getCountBatch() public view returns(uint){
+        return globatches.length;
+    }
+    
+    function getBatch(bytes32 _identity) public view returns(Batch memory batch_){
+        return globatches[idBatch[_identity]];
+    }
+    
+    function getBatch(uint _id) public view returns(Batch memory batch_){
+        return globatches[_id];
+    }
+    
+    function getIdBatch(bytes32 _identity) public view returns(uint){
+        return idBatch[_identity];
+    }
 }
 
+contract SupplychainFactory is Ownable {
+    Supplychain[] public deployedRoots;
+
+    event CreatedRoot(Supplychain indexed _root);
+
+    function createRoot() public {
+        Supplychain newsupplychain = new Supplychain(msg.sender);
+        deployedRoots.push(newsupplychain);
+        emit CreatedRoot(newsupplychain);
+    }
+
+    function getDeployedRoots() public view returns (Supplychain[]  memory roots) {
+        return deployedRoots;
+    }
+}
 
 contract EnterpriseFactory is Ownable {
     Enterprise[] public deployedEnterprises;
 
     event CreatedEnterprise(Enterprise indexed _newEnterprise);
 
-    function createEnterprise(bytes32 identity, address account, uint index) public {
+    function createEnterprise(bytes32 identity, address account, uint8 index) public {
         Enterprise newEnterprise = new Enterprise(identity, account, index, msg.sender);
         emit CreatedEnterprise(newEnterprise);
         deployedEnterprises.push(newEnterprise);
@@ -823,19 +841,4 @@ contract EnterpriseFactory is Ownable {
 }
 
 
-contract SupplyChainFactory is Ownable {
 
-    event CreatedRoot(SupplyChain indexed _root);
-
-    SupplyChain[] public deployedRoots;
-
-    function createRoot() public {
-        SupplyChain newSupplyChain=SupplyChain(msg.sender);
-        deployedRoots.push(newSupplyChain);
-        emit CreatedRoot(newSupplyChain);
-    }
-
-    function getDeployedRoots() public view returns (SupplyChain[] memory roots) {
-        return deployedRoots;
-    }
-}

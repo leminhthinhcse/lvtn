@@ -82,11 +82,18 @@ contract Enterprise  { //ghi nhan thong tin Doanh nghiep
     }
 }
 
-contract System{
+
+contract Supplychain is Ownable {
+    //bool public alert;
+    //bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
+    uint public temp; // Tao ra id
+    uint public i; //Bien dem theo Next
+    uint public j; //Bien dem theo Previous
+    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
     
     mapping (address=>bool) node; //cong ty co tham gia trong chuoi
     mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
-    mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
+    //mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
     mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
     mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
     mapping (bytes32=>uint) idBatch; //Cho biet id cua Batch khi biet Identity
@@ -94,17 +101,6 @@ contract System{
     mapping (uint=>uint[]) countNext; //NextPointer tai 1 nut
     mapping (uint=>uint[]) countPrev; //PreviousPointer tai 1 nut
     mapping (uint=>uint) soldAt;
-}
-
-contract Supplychain is Ownable, System {
-    bool public alert;
-    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
-    uint temp; // Tao ra id
-    uint i; //Bien dem theo Next
-    uint j; //Bien dem theo Previous
-    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
-    
-    
 
    // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
     //typedEvent public TYPEDEVENT;
@@ -117,19 +113,18 @@ contract Supplychain is Ownable, System {
     struct Batch {
     //    uint typedevent;
         uint id;
-        address frOm;
-        address tO;
         uint layerIndex;
-        bytes32 position;
-        uint when;
-        bytes32 identity;
-        bytes32 item;
         uint weight;
         uint quantity;
         uint startI;
         uint endI;
-        //uint[] next_i;
-        //uint[] prev_j;
+        uint when;
+        address frOm;
+        address tO;
+        bytes32 position;
+        bytes32 identity;
+        bytes32 item;
+      
     }
 
     Batch[] public globatches; //Toan bo Lo hang duoc luu tru
@@ -162,6 +157,8 @@ contract Supplychain is Ownable, System {
         owner = _creator; //Xac dinh chu so huu dau tien cua Lo hang
         layer[owner]=0;
         temp=0;
+        i=0;
+        j=0;
         //Them Doanh nghiep
         if (isNode(msg.sender)!=true){
             addNode(msg.sender);
@@ -187,9 +184,9 @@ contract Supplychain is Ownable, System {
         return soldItem[_id];
     }
     
-    function isStatus()public view returns(bool){
+   /* function isStatus()public view returns(bool){
         return alert;
-    }
+    }*/
     
     function setNext(uint _id, address _receiver) public {
         nexts.push(Next({
@@ -227,9 +224,9 @@ contract Supplychain is Ownable, System {
         bytes32 _identityPrevBatch)
     public onlyNode {
         layer[msg.sender]=layer[_from]+1;
-        alert=true;
-        alertedPosition.push(_identity);
-        temp=temp++;
+        //alert=true;
+        //alertedPosition.push(_identity);
+        temp=temp+1;
         globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -247,14 +244,14 @@ contract Supplychain is Ownable, System {
         }));
         
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
         existedBatch[temp]=true;
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -274,7 +271,7 @@ contract Supplychain is Ownable, System {
         uint _weight,
         uint _quantity)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -296,7 +293,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -321,7 +318,7 @@ contract Supplychain is Ownable, System {
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -343,7 +340,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -352,8 +349,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -374,7 +371,7 @@ contract Supplychain is Ownable, System {
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -396,7 +393,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -405,8 +402,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -427,7 +424,7 @@ contract Supplychain is Ownable, System {
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -449,7 +446,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -458,8 +455,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -480,7 +477,7 @@ contract Supplychain is Ownable, System {
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -502,7 +499,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -511,8 +508,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -533,7 +530,7 @@ contract Supplychain is Ownable, System {
         uint _quantity,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -555,7 +552,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -564,8 +561,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -587,7 +584,7 @@ contract Supplychain is Ownable, System {
         uint _productId,
         bytes32 _identityPrevBatch)
     public onlyNode{
-            temp=temp++;
+            temp=temp+1;
             globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -611,7 +608,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -620,8 +617,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -644,7 +641,7 @@ contract Supplychain is Ownable, System {
         uint _end,
         bytes32 _identityPrevBatch)
     public onlyNode{
-        temp=temp++;
+        temp=temp+1;
         globatches.push(Batch({
             //typedevent: _typedevent,
             id: temp,
@@ -666,7 +663,7 @@ contract Supplychain is Ownable, System {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -675,8 +672,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -699,7 +696,7 @@ contract Supplychain is Ownable, System {
         uint _end,
         bytes32 _identityPrevBatch)
     public onlyNode{
-        temp=temp++;
+        temp=temp+1;
         layer[msg.sender]=layer[_from]+1;
         globatches.push(Batch({
             //typedevent: _typedevent,
@@ -718,7 +715,7 @@ contract Supplychain is Ownable, System {
         }));
          
         //Danh dau nguoi tao Event
-        createdBy[temp]=msg.sender;
+        //createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -727,8 +724,8 @@ contract Supplychain is Ownable, System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i++;
-        j=j++;
+        i=i+1;
+        j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
         countNext[k].push(i);
@@ -747,13 +744,13 @@ contract Supplychain is Ownable, System {
         return globatches[_id].frOm;
     }
     
-    function alertBy(bytes32 _identity) public view returns(address){
+    /*function alertBy(bytes32 _identity) public view returns(address){
         return createdBy[idBatch[_identity]];
     }
     
     function alertBy(uint _id) public view returns(address){
         return createdBy[_id];
-    }
+    }*/
     
     function alertAt(bytes32 _identity) public view returns(bytes32){
         return globatches[idBatch[_identity]].position;
@@ -775,13 +772,13 @@ contract Supplychain is Ownable, System {
         return globatches[soldAt[_productId]].position;
     }
     
-    function getCreatBy(bytes32 _identity) public view returns(address){
+    /*function getCreatBy(bytes32 _identity) public view returns(address){
         return createdBy[idBatch[_identity]];
     }
     
     function getCreatBy(uint _id) public view returns(address){
         return createdBy[_id];
-    }
+    }*/
     
     function getLocation(bytes32 _identity) public view returns(bytes32){
         return globatches[idBatch[_identity]].position;
@@ -806,21 +803,13 @@ contract Supplychain is Ownable, System {
     function getIdBatch(bytes32 _identity) public view returns(uint){
         return idBatch[_identity];
     }
-}
-
-contract SupplychainFactory is Ownable {
-    Supplychain[] public deployedRoots;
-
-    event CreatedRoot(Supplychain indexed _root);
-
-    function createRoot() public {
-        Supplychain newsupplychain = new Supplychain(msg.sender);
-        deployedRoots.push(newsupplychain);
-        emit CreatedRoot(newsupplychain);
+    
+    function getNextPoint(uint k) public view returns (uint[] memory nextpointer){
+        return countNext[k];
     }
-
-    function getDeployedRoots() public view returns (Supplychain[]  memory roots) {
-        return deployedRoots;
+    
+    function getPrevPoint(uint k) public view returns (uint[] memory prevpointer){
+        return countPrev[k];
     }
 }
 
@@ -840,5 +829,18 @@ contract EnterpriseFactory is Ownable {
     }
 }
 
+contract SupplychainFactory is Ownable {
+    Supplychain[] public deployedRoots;
 
+    event CreatedRoot(Supplychain indexed _root);
 
+    function createRoot() public {
+        Supplychain newsupplychain = new Supplychain(msg.sender);
+        deployedRoots.push(newsupplychain);
+        emit CreatedRoot(newsupplychain);
+    }
+
+    function getDeployedRoots() public view returns (Supplychain[]  memory roots) {
+        return deployedRoots;
+    }
+}

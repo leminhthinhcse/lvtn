@@ -797,7 +797,7 @@ contract Supplychain is Ownable {
     }
     
     function getBatch(uint _id) public view returns(Batch memory batch_){
-        return globatches[_id];
+        return globatches[_id-1];
     }
     
     function getIdBatch(bytes32 _identity) public view returns(uint){

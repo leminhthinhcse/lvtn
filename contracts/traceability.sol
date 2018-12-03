@@ -84,23 +84,23 @@ contract Enterprise  { //ghi nhan thong tin Doanh nghiep
 
 
 contract Supplychain is Ownable {
-    //bool public alert;
-    //bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
+    bool public alert;
+    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
     uint public temp; // Tao ra id
     uint public i; //Bien dem theo Next
     uint public j; //Bien dem theo Previous
     address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
     
-    mapping (address=>bool) node; //cong ty co tham gia trong chuoi
-    mapping (address => uint) layer; //cho biet mot Nut o tang nao trong cay Do thi
-    //mapping (uint=>address) createdBy; //cho biet Batch thu i do ai tao ra
-    mapping (uint=>bool) existedBatch; //cho biet Batch thu i co ton tai khong
-    mapping (uint=>bool) soldItem; //cho biet san pham da ban chua
-    mapping (bytes32=>uint) idBatch; //Cho biet id cua Batch khi biet Identity
-    mapping (bytes32=>address) Of; //Chu so huu Batch la ai
-    mapping (uint=>uint[]) countNext; //NextPointer tai 1 nut
-    mapping (uint=>uint[]) countPrev; //PreviousPointer tai 1 nut
-    mapping (uint=>uint) soldAt;
+    mapping (address=>bool) public node; //cong ty co tham gia trong chuoi
+    mapping (address => uint) public layer; //cho biet mot Nut o tang nao trong cay Do thi
+    mapping (uint=>address) public createdBy; //cho biet Batch thu i do ai tao ra
+    mapping (uint=>bool) public existedBatch; //cho biet Batch thu i co ton tai khong
+    mapping (uint=>bool) public soldItem; //cho biet san pham da ban chua
+    mapping (bytes32=>uint) public idBatch; //Cho biet id cua Batch khi biet Identity
+    mapping (bytes32=>address) public Of; //Chu so huu Batch la ai
+    mapping (uint=>uint[]) public countNext; //NextPointer tai 1 nut
+    mapping (uint=>uint[]) public countPrev; //PreviousPointer tai 1 nut
+    mapping (uint=>uint) public soldAt;
 
    // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
     //typedEvent public TYPEDEVENT;
@@ -184,9 +184,9 @@ contract Supplychain is Ownable {
         return soldItem[_id];
     }
     
-   /* function isStatus()public view returns(bool){
+    function isStatus()public view returns(bool){
         return alert;
-    }*/
+    }
     
     function setNext(uint _id, address _receiver) public {
         nexts.push(Next({
@@ -224,8 +224,8 @@ contract Supplychain is Ownable {
         bytes32 _identityPrevBatch)
     public onlyNode {
         layer[msg.sender]=layer[_from]+1;
-        //alert=true;
-        //alertedPosition.push(_identity);
+        alert=true;
+        alertedPosition.push(_identity);
         temp=temp+1;
         globatches.push(Batch({
             //typedevent: _typedevent,
@@ -244,7 +244,7 @@ contract Supplychain is Ownable {
         }));
         
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -254,10 +254,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
     
@@ -293,7 +293,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -340,7 +340,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -353,10 +353,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
     
@@ -393,7 +393,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -406,10 +406,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
     
@@ -446,7 +446,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -459,10 +459,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
    }
 
@@ -499,7 +499,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -512,10 +512,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
 
@@ -552,7 +552,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -565,10 +565,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
 
@@ -608,7 +608,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -621,10 +621,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
 
@@ -663,7 +663,7 @@ contract Supplychain is Ownable {
             inChainEnterprises.push(_to);
         }
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -676,10 +676,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
     
@@ -715,7 +715,7 @@ contract Supplychain is Ownable {
         }));
          
         //Danh dau nguoi tao Event
-        //createdBy[temp]=msg.sender;
+        createdBy[temp]=msg.sender;
         //Dem so Event
         //counter++;
         
@@ -728,10 +728,10 @@ contract Supplychain is Ownable {
         j=j+1;
         //tao NextPoint cho Batch truoc do
         uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i);
+        countNext[k].push(i-1);
         setNextPoint(temp);
         //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j);
+        countPrev[temp].push(j-1);
         setPreviousPoint(_identityPrevBatch);
     }
     
@@ -744,13 +744,13 @@ contract Supplychain is Ownable {
         return globatches[_id].frOm;
     }
     
-    /*function alertBy(bytes32 _identity) public view returns(address){
+    function alertBy(bytes32 _identity) public view returns(address){
         return createdBy[idBatch[_identity]];
     }
     
     function alertBy(uint _id) public view returns(address){
         return createdBy[_id];
-    }*/
+    }
     
     function alertAt(bytes32 _identity) public view returns(bytes32){
         return globatches[idBatch[_identity]].position;
@@ -772,13 +772,13 @@ contract Supplychain is Ownable {
         return globatches[soldAt[_productId]].position;
     }
     
-    /*function getCreatBy(bytes32 _identity) public view returns(address){
+    function getCreatBy(bytes32 _identity) public view returns(address){
         return createdBy[idBatch[_identity]];
     }
     
     function getCreatBy(uint _id) public view returns(address){
         return createdBy[_id];
-    }*/
+    }
     
     function getLocation(bytes32 _identity) public view returns(bytes32){
         return globatches[idBatch[_identity]].position;

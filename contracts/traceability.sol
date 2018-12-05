@@ -82,15 +82,7 @@ contract Enterprise  { //ghi nhan thong tin Doanh nghiep
     }
 }
 
-
-contract Supplychain is Ownable {
-    bool public alert;
-    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
-    uint public temp; // Tao ra id
-    uint public i; //Bien dem theo Next
-    uint public j; //Bien dem theo Previous
-    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
-    
+contract System {
     mapping (address=>bool) public node; //cong ty co tham gia trong chuoi
     mapping (address => uint) public layer; //cho biet mot Nut o tang nao trong cay Do thi
     mapping (uint=>address) public createdBy; //cho biet Batch thu i do ai tao ra
@@ -101,14 +93,16 @@ contract Supplychain is Ownable {
     mapping (uint=>uint[]) public countNext; //NextPointer tai 1 nut
     mapping (uint=>uint[]) public countPrev; //PreviousPointer tai 1 nut
     mapping (uint=>uint) public soldAt;
+}
 
-   // enum typedEvent{harvest, store, packing, shipping, transport, unpacking, sell, addCode}
-    //typedEvent public TYPEDEVENT;
-    //enum typedProduct{sold, unSold}
-    //typedProduct public TYPEDPRODUCT;
-   
-    //address creator;
-    //owner=creator;
+
+contract Supplychain is Ownable,System {
+    bool public alert;
+    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
+    uint public temp; // Tao ra id
+    uint public i; //Bien dem theo Next
+    uint public j; //Bien dem theo Previous
+    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
 
     struct Batch {
     //    uint typedevent;

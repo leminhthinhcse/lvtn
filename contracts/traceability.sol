@@ -598,7 +598,7 @@ contract Supplychain is Ownable,System {
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        uint _productId,
+        uint[] memory _productId,
         bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
@@ -617,8 +617,11 @@ contract Supplychain is Ownable,System {
             startI:0,
             endI: 0
         }));
-        soldItem[_productId] = true;
-        soldAt[_productId]=temp;
+        for (uint p=0; p<_productId.length;p++){
+            soldItem[_productId[p]] = true;
+            soldAt[_productId[p]]=temp;
+        }
+        
          //Them Doanh nghiep
         if (isNode(_to)!=true){
             addNode(_to);

@@ -1,0 +1,779 @@
+pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
+import "Ownable.sol"
+import "System.sol"
+
+contract Supplychain is Ownable,System {
+    uint public temp; // Tao ra id
+    uint public i; //Bien dem theo Next
+    uint public j; //Bien dem theo Previous
+   
+
+    struct Batch {
+    //    uint typedevent;
+        uint id;
+        uint layerIndex;
+        uint weight;
+        uint quantity;
+        uint startI;
+        uint endI;
+        uint when;
+        address frOm;
+        address tO;
+        bytes32 location;
+        bytes32 identity;
+        bytes32 item;
+      
+    }
+
+    Batch[] public globatches; //Toan bo Lo hang duoc luu tru
+    
+   
+    
+    //Cac batch duoc gui tiep theo tu 1 nut
+    struct Next { 
+        uint id;
+        address receiver;
+    }
+
+    Next[] public nexts; //Toan bo con tro Next
+
+    //Cac batch deu gui den cung 1 nut 
+    struct Previous {
+        uint id;
+        address sender;
+    }
+    
+    Previous[] public previouses;
+    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
+    modifier onlyNode() {
+        require(node[msg.sender] == true);
+        _;
+    }
+     function addNode(address _account) public{
+        node[_account]=true;
+    }
+    
+    function isNode(address _account) public view returns(bool){
+        if(node[_account]==true) {
+            return true;
+            
+        } else if (
+            node[_account]==false) {
+                return false;
+                
+        }
+    }
+     
+   
+
+    constructor (address _creator)
+    public {
+        owner = _creator; //Xac dinh chu so huu dau tien cua Lo hang
+        layer[owner]=0;
+        temp=0;
+        i=0;
+        j=0;
+        //Them Doanh nghiep
+        addNode(_creator);
+        inChainEnterprises.push(_creator);
+        //counter=0;
+    }
+    
+    function isExisted(uint _id) public view returns (bool){
+        return existedBatch[_id];
+    }
+    
+   
+    
+    function isSold(uint _id) public view returns(bool){
+        return soldItem[_id];
+    }
+    
+    /*function isStatus()public view returns(bool){
+        return alert;
+    }*/
+    
+    function setNext(uint _id, address _receiver) public {
+        nexts.push(Next({
+            id: _id,
+            receiver: _receiver
+        }));
+    }
+    
+    function setPrevious(uint _id, address _sender) public{
+        previouses.push(Previous({
+            id: _id,
+            sender: _sender
+        }));
+    }
+    
+    function setNextPoint(uint _idCurBatch) public{
+        setNext(_idCurBatch,msg.sender);
+    }
+    
+    function setPreviousPoint(bytes32 _identityPrevBatch)public{
+        setPrevious(idBatch[_identityPrevBatch],Of[_identityPrevBatch]);
+    }
+    
+    /*function setAlert (
+        //uint _typedevent,
+        address _from,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        uint _start,
+        uint _end,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode {
+        layer[msg.sender]=layer[_from]+1;
+        alert=true;
+        alertedLocation.push(_identity);
+        temp=temp+1;
+        globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: _from,
+            tO: msg.sender,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:_start,
+            endI: _end
+        }));
+        
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+         for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+        
+      
+    }*/
+    
+    function setHarvest(
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+        //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        //i=i++;
+        //j=j++;
+        
+    }
+    
+    function setStore (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex:layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+       for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+        }
+    }
+    
+    function setPacking (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex:layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+        }
+    }
+    
+    function setUnpacking (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+   }
+
+    function setShipping (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+    }
+
+    function setTransport (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+    }
+
+    function setSell (
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        uint[] memory _productId,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+            temp=temp+1;
+            globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:0,
+            endI: 0
+        }));
+        for (uint p=0; p<_productId.length;p++){
+            soldItem[_productId[p]] = true;
+            soldAt[_productId[p]]=temp;
+        }
+        
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+    }
+
+    function setaddCode(
+        //uint _typedevent,
+        address _to,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        uint _start,
+        uint _end,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+        temp=temp+1;
+        globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: msg.sender,
+            tO: _to,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:_start,
+            endI: _end
+        }));
+         //Them Doanh nghiep
+        if (isNode(_to)!=true){
+            addNode(_to);
+            inChainEnterprises.push(_to);
+        }
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+    }
+    
+    function setReceive(
+        //uint _typedevent,
+        address _from,
+        bytes32 _location,
+        uint _when,
+        bytes32 _identity,
+        bytes32 _item,
+        uint _weight,
+        uint _quantity,
+        uint _start,
+        uint _end,
+        bytes32[] memory _identityPrevBatch)
+    public onlyNode{
+        temp=temp+1;
+        layer[msg.sender]=layer[_from]+1;
+        globatches.push(Batch({
+            //typedevent: _typedevent,
+            id: temp,
+            frOm: _from,
+            tO: msg.sender,
+            layerIndex: layer[msg.sender]+1,
+            location: _location,
+            when: _when,
+            identity: _identity,
+            item: _item,
+            weight: _weight,
+            quantity: _quantity,
+            startI:_start,
+            endI: _end
+        }));
+         
+        //Danh dau nguoi tao Event
+        createdBy[temp]=msg.sender;
+        //Dem so Event
+        //counter++;
+        
+        existedBatch[temp]=true;
+        
+        idBatch[_identity]=temp; //Danh dau Id Lo hang
+        Of[_identity]=msg.sender; //Danh dau Chu so huu
+        
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+    }
+    
+    /*
+    function alertWith(bytes32 _identity) public view returns(address){
+        return globatches[idBatch[_identity]].frOm;
+    }
+    
+    function alertWith(uint _id) public view returns(address){
+        return globatches[_id].frOm;
+    }
+    
+    function alertBy(bytes32 _identity) public view returns(address){
+        return createdBy[idBatch[_identity]];
+    }
+    
+    function alertBy(uint _id) public view returns(address){
+        return createdBy[_id];
+    }
+    
+    function alertAt(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].location;
+    }
+    
+    function alertAt(uint _id) public view returns(bytes32){
+        return globatches[_id].location;
+    }*/
+    
+    function getEvent1(uint _idBatch) public view returns(
+        uint id_,
+        uint layerIndex_,
+        uint weight_,
+        uint quantity_,
+        uint startI_,
+        uint endI_
+        ){
+        return (
+            globatches[_idBatch].id,
+            globatches[_idBatch].layerIndex,
+            globatches[_idBatch].weight,
+            globatches[_idBatch].quantity,
+            globatches[_idBatch].startI,
+            globatches[_idBatch].endI
+        );
+    }
+    
+    function getEvent2(uint _idBatch) public view returns(
+        uint when_,
+        address frOm_,
+        address tO_,
+        bytes32 location_,
+        bytes32 identity_,
+        bytes32 item_
+        ){
+        return (
+            globatches[_idBatch].when,
+            globatches[_idBatch].frOm,
+            globatches[_idBatch].tO,
+            globatches[_idBatch].location,
+            globatches[_idBatch].identity,
+            globatches[_idBatch].item
+        );
+    }
+    
+    function getSoldItemInBatch(uint _productId) public view returns(Batch memory batch_){
+        return globatches[soldAt[_productId]];
+    }
+    
+    function getSoldBy(uint _productId) public view returns(address){
+        return globatches[soldAt[_productId]].frOm;
+    }
+    
+    function getSoldAt(uint _productId)public view returns(bytes32){
+        return globatches[soldAt[_productId]].location;
+    }
+    
+    function getCreatBy(bytes32 _identity) public view returns(address){
+        return createdBy[idBatch[_identity]];
+    }
+    
+    function getCreatBy(uint _id) public view returns(address){
+        return createdBy[_id];
+    }
+    
+    function getLocation(bytes32 _identity) public view returns(bytes32){
+        return globatches[idBatch[_identity]].location;
+    }
+    
+     function getLocation(uint _id) public view returns(bytes32){
+        return globatches[_id].location;
+    }
+    
+    function getCountBatch() public view returns(uint){
+        return globatches.length;
+    }
+    
+    function getBatch(bytes32 _identity) public view returns(Batch memory batch_){
+        return globatches[idBatch[_identity]];
+    }
+    
+    function getBatch(uint _id) public view returns(Batch memory batch_){
+        return globatches[_id-1];
+    }
+    
+    function getIdBatch(bytes32 _identity) public view returns(uint){
+        return idBatch[_identity];
+    }
+    
+    function getNextPoint(uint k) public view returns (uint[] memory nextpointer){
+        return countNext[k];
+    }
+    
+    function getPrevPoint(uint k) public view returns (uint[] memory prevpointer){
+        return countPrev[k];
+    }
+}

@@ -93,16 +93,18 @@ contract System {
     mapping (uint=>uint[]) public countNext; //NextPointer tai 1 nut
     mapping (uint=>uint[]) public countPrev; //PreviousPointer tai 1 nut
     mapping (uint=>uint) public soldAt;
+    //bool public alert;
+    //bytes32[] public alertedLocation; //Danh sach cac vi tri canh bao
+    
+    
 }
 
 
 contract Supplychain is Ownable,System {
-    bool public alert;
-    bytes32[] public alertedPosition; //Danh sach cac vi tri canh bao
     uint public temp; // Tao ra id
     uint public i; //Bien dem theo Next
     uint public j; //Bien dem theo Previous
-    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
+   
 
     struct Batch {
     //    uint typedevent;
@@ -115,7 +117,7 @@ contract Supplychain is Ownable,System {
         uint when;
         address frOm;
         address tO;
-        bytes32 position;
+        bytes32 location;
         bytes32 identity;
         bytes32 item;
       
@@ -140,11 +142,27 @@ contract Supplychain is Ownable,System {
     }
     
     Previous[] public previouses;
-
+    address[] public inChainEnterprises; //cac Cong ty tham gia trong chuoi
     modifier onlyNode() {
         require(node[msg.sender] == true);
         _;
     }
+     function addNode(address _account) public{
+        node[_account]=true;
+    }
+    
+    function isNode(address _account) public view returns(bool){
+        if(node[_account]==true) {
+            return true;
+            
+        } else if (
+            node[_account]==false) {
+                return false;
+                
+        }
+    }
+     
+   
 
     constructor (address _creator)
     public {
@@ -154,11 +172,8 @@ contract Supplychain is Ownable,System {
         i=0;
         j=0;
         //Them Doanh nghiep
-        if (isNode(msg.sender)!=true){
-            addNode(msg.sender);
-            inChainEnterprises.push(msg.sender);
-        }
-        
+        addNode(_creator);
+        inChainEnterprises.push(_creator);
         //counter=0;
     }
     
@@ -166,21 +181,15 @@ contract Supplychain is Ownable,System {
         return existedBatch[_id];
     }
     
-    function addNode(address _account) public{
-        node[_account]=true;
-    }
-    
-    function isNode(address _account) public view returns(bool){
-        if(node[_account]==true) return true;
-    }
+   
     
     function isSold(uint _id) public view returns(bool){
         return soldItem[_id];
     }
     
-    function isStatus()public view returns(bool){
+    /*function isStatus()public view returns(bool){
         return alert;
-    }
+    }*/
     
     function setNext(uint _id, address _receiver) public {
         nexts.push(Next({
@@ -204,10 +213,10 @@ contract Supplychain is Ownable,System {
         setPrevious(idBatch[_identityPrevBatch],Of[_identityPrevBatch]);
     }
     
-    function setAlert (
+    /*function setAlert (
         //uint _typedevent,
         address _from,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
@@ -215,11 +224,11 @@ contract Supplychain is Ownable,System {
         uint _quantity,
         uint _start,
         uint _end,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode {
         layer[msg.sender]=layer[_from]+1;
         alert=true;
-        alertedPosition.push(_identity);
+        alertedLocation.push(_identity);
         temp=temp+1;
         globatches.push(Batch({
             //typedevent: _typedevent,
@@ -227,7 +236,7 @@ contract Supplychain is Ownable,System {
             frOm: _from,
             tO: msg.sender,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -244,21 +253,25 @@ contract Supplychain is Ownable,System {
         
         existedBatch[temp]=true;
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
-    }
+         for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
+        
+      
+    }*/
     
     function setHarvest(
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
@@ -272,7 +285,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -304,13 +317,13 @@ contract Supplychain is Ownable,System {
     function setStore (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -319,7 +332,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex:layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -343,27 +356,29 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+       for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+        }
     }
     
     function setPacking (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -372,7 +387,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex:layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -396,27 +411,29 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+        }
     }
     
     function setUnpacking (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -425,7 +442,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -449,27 +466,29 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
    }
 
     function setShipping (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -478,7 +497,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -502,27 +521,29 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
     }
 
     function setTransport (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -531,7 +552,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -555,28 +576,30 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
     }
 
     function setSell (
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
         uint _weight,
         uint _quantity,
         uint _productId,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
             temp=temp+1;
             globatches.push(Batch({
@@ -585,7 +608,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -611,21 +634,23 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
     }
 
     function setaddCode(
         //uint _typedevent,
         address _to,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
@@ -633,7 +658,7 @@ contract Supplychain is Ownable,System {
         uint _quantity,
         uint _start,
         uint _end,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
         temp=temp+1;
         globatches.push(Batch({
@@ -642,7 +667,7 @@ contract Supplychain is Ownable,System {
             frOm: msg.sender,
             tO: _to,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -666,21 +691,23 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
     }
     
     function setReceive(
         //uint _typedevent,
         address _from,
-        bytes32 _position,
+        bytes32 _location,
         uint _when,
         bytes32 _identity,
         bytes32 _item,
@@ -688,7 +715,7 @@ contract Supplychain is Ownable,System {
         uint _quantity,
         uint _start,
         uint _end,
-        bytes32 _identityPrevBatch)
+        bytes32[] memory _identityPrevBatch)
     public onlyNode{
         temp=temp+1;
         layer[msg.sender]=layer[_from]+1;
@@ -698,7 +725,7 @@ contract Supplychain is Ownable,System {
             frOm: _from,
             tO: msg.sender,
             layerIndex: layer[msg.sender]+1,
-            position: _position,
+            location: _location,
             when: _when,
             identity: _identity,
             item: _item,
@@ -718,18 +745,20 @@ contract Supplychain is Ownable,System {
         idBatch[_identity]=temp; //Danh dau Id Lo hang
         Of[_identity]=msg.sender; //Danh dau Chu so huu
         
-        i=i+1;
-        j=j+1;
-        //tao NextPoint cho Batch truoc do
-        uint k=idBatch[_identityPrevBatch];
-        countNext[k].push(i-1);
-        setNextPoint(temp);
-        //tao PreviousPoint cho Batch hien tai
-        countPrev[temp].push(j-1);
-        setPreviousPoint(_identityPrevBatch);
+        for(uint t=0; t<_identityPrevBatch.length; t++){ //Duyệt qua danh sách các Lo hang truoc do
+                i=i+1;
+                j=j+1;
+                //tao NextPoint cho Batch truoc do
+                uint k=idBatch[_identityPrevBatch[t]];
+                countNext[k].push(i-1);
+                setNextPoint(temp);
+                //tao PreviousPoint cho Batch hien tai
+                countPrev[temp].push(j-1);
+                setPreviousPoint(_identityPrevBatch[t]);
+            }
     }
     
-    
+    /*
     function alertWith(bytes32 _identity) public view returns(address){
         return globatches[idBatch[_identity]].frOm;
     }
@@ -747,11 +776,47 @@ contract Supplychain is Ownable,System {
     }
     
     function alertAt(bytes32 _identity) public view returns(bytes32){
-        return globatches[idBatch[_identity]].position;
+        return globatches[idBatch[_identity]].location;
     }
     
     function alertAt(uint _id) public view returns(bytes32){
-        return globatches[_id].position;
+        return globatches[_id].location;
+    }*/
+    
+    function getEvent1(uint _idBatch) public view returns(
+        uint id_,
+        uint layerIndex_,
+        uint weight_,
+        uint quantity_,
+        uint startI_,
+        uint endI_
+        ){
+        return (
+            globatches[_idBatch].id,
+            globatches[_idBatch].layerIndex,
+            globatches[_idBatch].weight,
+            globatches[_idBatch].quantity,
+            globatches[_idBatch].startI,
+            globatches[_idBatch].endI
+        );
+    }
+    
+    function getEvent2(uint _idBatch) public view returns(
+        uint when_,
+        address frOm_,
+        address tO_,
+        bytes32 location_,
+        bytes32 identity_,
+        bytes32 item_
+        ){
+        return (
+            globatches[_idBatch].when,
+            globatches[_idBatch].frOm,
+            globatches[_idBatch].tO,
+            globatches[_idBatch].location,
+            globatches[_idBatch].identity,
+            globatches[_idBatch].item
+        );
     }
     
     function getSoldItemInBatch(uint _productId) public view returns(Batch memory batch_){
@@ -763,7 +828,7 @@ contract Supplychain is Ownable,System {
     }
     
     function getSoldAt(uint _productId)public view returns(bytes32){
-        return globatches[soldAt[_productId]].position;
+        return globatches[soldAt[_productId]].location;
     }
     
     function getCreatBy(bytes32 _identity) public view returns(address){
@@ -775,11 +840,11 @@ contract Supplychain is Ownable,System {
     }
     
     function getLocation(bytes32 _identity) public view returns(bytes32){
-        return globatches[idBatch[_identity]].position;
+        return globatches[idBatch[_identity]].location;
     }
     
      function getLocation(uint _id) public view returns(bytes32){
-        return globatches[_id].position;
+        return globatches[_id].location;
     }
     
     function getCountBatch() public view returns(uint){
@@ -823,7 +888,7 @@ contract EnterpriseFactory is Ownable {
     }
 }
 
-contract SupplychainFactory is Ownable {
+contract SupplychainFactory is Ownable{
     Supplychain[] public deployedRoots;
 
     event CreatedRoot(Supplychain indexed _root);
